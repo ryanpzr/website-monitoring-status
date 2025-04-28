@@ -1,7 +1,7 @@
 package router
 
 import (
-	"internal/controller"
+	"website-monitoring/internal/controller"
 
 	"github.com/gorilla/mux"
 )
