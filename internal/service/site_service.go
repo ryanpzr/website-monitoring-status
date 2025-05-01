@@ -12,8 +12,8 @@ func PostSite(site model.Site) (model.Site, error) {
 	}
 	defer conn.Close()
 
-	sql := `INSERT INTO site (name, url, freq, id) VALUES ($1, $2, $3, $4)`
-	_, err = conn.Exec(sql, site.Name, site.Url, site.Freq, site.Id)
+	sql := `INSERT INTO site (name, url, freq) VALUES ($1, $2, $3)`
+	_, err = conn.Exec(sql, site.Name, site.Url, site.Freq)
 	if err != nil {
 		return model.Site{}, err
 	}

@@ -9,7 +9,7 @@ import (
 
 func main() {
 	r := router.SetupRouter()
-	go service.VerifacateWebStatus()
+	go service.VerifyWebStatus()
 	log.Println("Starting server on :8080...")
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatalf("Could not start server: %v\n", err)
