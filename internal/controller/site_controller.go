@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"website-monitoring/internal/model"
 	"website-monitoring/internal/service"
+
+	"github.com/gorilla/mux"
 )
 
 func PostSite(w http.ResponseWriter, r *http.Request) {
@@ -27,4 +29,34 @@ func PostSite(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(siteCreated)
+}
+
+func GetSiteById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	site, err := service.GetSiteById(id)
+	if err != nil {
+		http.Error(w, "Erro ao buscar status do site: "+err.Error(), http.StatusInternalServerError)
+		log.Printf("Erro ao buscar status do site: %v", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(site)
+
+}
+
+func GetAllSites(w http.ResponseWriter, r *http.Request) {
+	siteList, err := service.GetAllSites()
+	if err != nil {
+		http.Error(w, "Erro ao buscar sites: "+err.Error(), http.StatusInternalServerError)
+		log.Printf("Erro ao buscar sites: %v", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(siteList)
 }
