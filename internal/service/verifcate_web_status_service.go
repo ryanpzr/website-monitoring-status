@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"website-monitoring/configs/dbconfig"
 	"website-monitoring/internal/model"
 	"website-monitoring/internal/repository"
 )
@@ -48,15 +47,7 @@ func getRowsBd(ch chan<- []model.Site) {
 }
 
 func fetchSite() ([]model.Site, error) {
-	conn, err := dbconfig.OpenConn()
-	if err != nil {
-		fmt.Println("Erro ao abrir conexão com o banco", err)
-		return nil, err
-	}
-	defer conn.Close()
-
-	sql := "SELECT name, url, freq, id FROM site"
-	rows, err := conn.Query(sql)
+	rows, err := repository.GetBdAllSites()
 	if err != nil {
 		log.Fatal("Erro ao buscar dados no banco.", err)
 		return nil, err

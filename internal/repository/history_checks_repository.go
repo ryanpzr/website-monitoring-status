@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"time"
 	"website-monitoring/configs/dbconfig"
 	"website-monitoring/internal/model"
@@ -20,4 +21,20 @@ func PostBdSiteStatus(site model.Site, duration time.Duration, status string) er
 	}
 
 	return nil
+}
+
+func GetBdAllChecks() (*sql.Rows, error) {
+	conn, err := dbconfig.OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	sql := "SELECT * FROM history_checks"
+	rows, err := conn.Query(sql)
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
 }

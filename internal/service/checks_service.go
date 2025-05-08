@@ -1,23 +1,17 @@
 package service
 
 import (
-	"website-monitoring/configs/dbconfig"
+	"fmt"
 	"website-monitoring/internal/model"
+	"website-monitoring/internal/repository"
 )
 
 func GetAllChecksHistory() ([]model.Check, error) {
-	conn, err := dbconfig.OpenConn()
+	rows, err := repository.GetBdAllChecks()
 	if err != nil {
+		fmt.Println("Erro ao buscar checks no banco de dados. ", err)
 		return nil, err
 	}
-	defer conn.Close()
-
-	sql := "SELECT * FROM history_checks"
-	rows, err := conn.Query(sql)
-	if err != nil {
-		return nil, err
-	}
-
 	var checkList []model.Check
 	for rows.Next() {
 		var check model.Check
