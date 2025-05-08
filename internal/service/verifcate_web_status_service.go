@@ -1,13 +1,13 @@
 package service
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 	"website-monitoring/configs/dbconfig"
 	"website-monitoring/internal/model"
+	"website-monitoring/internal/repository"
 )
 
 const (
@@ -16,51 +16,53 @@ const (
 )
 
 func VerifyWebStatus() {
-	rowsCh := make(chan *sql.Rows)
-	go getRowsBd(rowsCh)
+	siteCh := make(chan []model.Site)
+	go getRowsBd(siteCh)
 
-	rows := <-rowsCh
-	if rows == nil {
-		log.Println("Erro ao buscar dados")
-		return
-	}
-
-	siteList := getSiteList(rows)
-	for _, site := range siteList {
-		go monitor(site)
-	}
-}
-
-func getRowsBd(ch chan<- *sql.Rows) {
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			fmt.Println("Verificando se a novos sites cadastrados...")
-			conn, err := dbconfig.OpenConn()
-			if err != nil {
-				fmt.Println("Erro ao abrir conexão com o banco", err)
-				ch <- nil
-				return
-			}
-			defer conn.Close()
-
-			sql := "SELECT name, url, freq, id FROM site"
-			resp, err := conn.Query(sql)
-			if err != nil {
-				log.Fatal("Erro ao buscar dados no banco.", err)
-				ch <- nil
+	go func() {
+		for {
+			siteList := <-siteCh
+			if siteList == nil {
+				log.Println("Erro ao buscar dados do site")
 				return
 			}
 
-			ch <- resp
+			for _, site := range siteList {
+				go monitor(site)
+			}
 		}
+	}()
+}
+
+func getRowsBd(ch chan<- []model.Site) {
+	for {
+		time.Sleep(10 * time.Second)
+		fmt.Println("Verificando se a novos sites cadastrados...")
+
+		siteList, err := fetchSite()
+		if err != nil {
+
+		}
+		ch <- siteList
 	}
 }
 
-func getSiteList(rows *sql.Rows) []model.Site {
+func fetchSite() ([]model.Site, error) {
+	conn, err := dbconfig.OpenConn()
+	if err != nil {
+		fmt.Println("Erro ao abrir conexão com o banco", err)
+		return nil, err
+	}
+	defer conn.Close()
+
+	sql := "SELECT name, url, freq, id FROM site"
+	rows, err := conn.Query(sql)
+	if err != nil {
+		log.Fatal("Erro ao buscar dados no banco.", err)
+		return nil, err
+	}
+	defer rows.Close()
+
 	var siteList []model.Site
 	for rows.Next() {
 		var id int
@@ -71,6 +73,7 @@ func getSiteList(rows *sql.Rows) []model.Site {
 		err := rows.Scan(&name, &url, &freq, &id)
 		if err != nil {
 			fmt.Println("Erro ao ler linha referente aos resultados do banco.", err)
+			continue
 		}
 
 		site := model.Site{
@@ -82,7 +85,8 @@ func getSiteList(rows *sql.Rows) []model.Site {
 
 		siteList = append(siteList, site)
 	}
-	return siteList
+
+	return siteList, nil
 }
 
 func monitor(site model.Site) {
@@ -90,28 +94,19 @@ func monitor(site model.Site) {
 	defer ticker.Stop()
 	errTimes := 0
 
-	conn, err := dbconfig.OpenConn()
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer conn.Close()
-
 	for {
 		select {
 		case <-ticker.C:
-			sql := "INSERT INTO history_checks (site_id, status, time_response, http_code) VALUES ($1, $2, $3, $4)"
 
 			start := time.Now()
 			resp, err := http.Get(site.Url)
 			duration := time.Since(start)
 
 			if err != nil {
-				_, err := conn.Exec(sql, site.Id, "Offline", duration.Milliseconds(), 0)
+				err = repository.PostBdSiteStatus(site, duration, "Offline")
 				if err != nil {
-					fmt.Println(err)
-					return
+					fmt.Println("Erro ao guardar status do site. ", err)
 				}
-
 				errTimes++
 				if errTimes >= 3 {
 					fmt.Println("====================")
@@ -130,10 +125,9 @@ func monitor(site model.Site) {
 				continue
 			}
 
-			_, err = conn.Exec(sql, site.Id, "Online", duration.Milliseconds(), resp.StatusCode)
+			err = repository.PostBdSiteStatus(site, duration, "Online")
 			if err != nil {
-				fmt.Println(err)
-				return
+				fmt.Println("Erro ao guardar status do site. ", err)
 			}
 
 			log.Printf("[%s] Site %s (%s) está %s - Código: %d - Tempo: %dms",

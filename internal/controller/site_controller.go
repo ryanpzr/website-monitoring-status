@@ -7,8 +7,11 @@ import (
 	"website-monitoring/internal/model"
 	"website-monitoring/internal/service"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
+
+var validate = validator.New()
 
 func PostSite(w http.ResponseWriter, r *http.Request) {
 	var siteInformation model.Site
@@ -16,6 +19,13 @@ func PostSite(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&siteInformation)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = validate.Struct(siteInformation)
+	if err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+		http.Error(w, validationErrors.Error(), http.StatusBadRequest)
 		return
 	}
 
