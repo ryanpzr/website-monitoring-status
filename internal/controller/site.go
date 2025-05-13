@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"website-monitoring/internal"
 	"website-monitoring/internal/model"
 	"website-monitoring/internal/service"
 
@@ -25,7 +26,13 @@ func PostSite(w http.ResponseWriter, r *http.Request) {
 	err = validate.Struct(siteInformation)
 	if err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		http.Error(w, validationErrors.Error(), http.StatusBadRequest)
+		var errMap = make(map[string]string)
+		for i := range validationErrors {
+			internal.GetMessageFromFieldError(&errMap, validationErrors[i])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errMap)
 		return
 	}
 
