@@ -2,12 +2,12 @@ package repository
 
 import (
 	"database/sql"
-	"website-monitoring/configs/dbconfig"
+	"website-monitoring/configs/db"
 	"website-monitoring/internal/model"
 )
 
 func GetBdAllSites() (*sql.Rows, error) {
-	conn, err := dbconfig.OpenConn()
+	conn, err := db.OpenConn()
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func GetBdAllSites() (*sql.Rows, error) {
 }
 
 func GetBdSiteById(id string) *sql.Row {
-	conn, err := dbconfig.OpenConn()
+	conn, err := db.OpenConn()
 	if err != nil {
 		return nil
 	}
@@ -36,7 +36,7 @@ func GetBdSiteById(id string) *sql.Row {
 }
 
 func PostBdSite(site model.Site) error {
-	conn, err := dbconfig.OpenConn()
+	conn, err := db.OpenConn()
 	if err != nil {
 		return err
 	}

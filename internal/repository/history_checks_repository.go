@@ -3,12 +3,12 @@ package repository
 import (
 	"database/sql"
 	"time"
-	"website-monitoring/configs/dbconfig"
+	"website-monitoring/configs/db"
 	"website-monitoring/internal/model"
 )
 
 func PostBdSiteStatus(site model.Site, duration time.Duration, status string) error {
-	conn, err := dbconfig.OpenConn()
+	conn, err := db.OpenConn()
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func PostBdSiteStatus(site model.Site, duration time.Duration, status string) er
 }
 
 func GetBdAllChecks() (*sql.Rows, error) {
-	conn, err := dbconfig.OpenConn()
+	conn, err := db.OpenConn()
 	if err != nil {
 		return nil, err
 	}
