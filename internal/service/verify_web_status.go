@@ -35,8 +35,8 @@ func VerifyWebStatus() {
 
 func getRowsBd(ch chan<- []model.Site) {
 	for {
-		time.Sleep(10 * time.Second)
 		fmt.Println("Verificando se a novos sites cadastrados...")
+		time.Sleep(10 * time.Second)
 
 		siteList, err := fetchSite()
 		if err != nil {

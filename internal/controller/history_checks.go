@@ -1,20 +1,20 @@
 package controller
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"website-monitoring/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
-func GetAllChecksHistory(w http.ResponseWriter, r *http.Request) {
+func GetAllChecksHistory(c *gin.Context) {
 	checksList, err := service.GetAllChecksHistory()
 	if err != nil {
-		http.Error(w, "Erro ao buscar sites: "+err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Erro ao buscar o histórico de checks. " + err.Error()})
 		log.Printf("Erro ao buscar sites: %v", err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(checksList)
+	c.JSON(http.StatusOK, checksList)
 }

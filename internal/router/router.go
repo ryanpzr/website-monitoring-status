@@ -3,14 +3,15 @@ package router
 import (
 	"website-monitoring/internal/controller"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter() *mux.Router {
-	r := mux.NewRouter()
-	r.HandleFunc("/sites", controller.PostSite).Methods("POST")
-	r.HandleFunc("/sites", controller.GetAllSites).Methods("GET")
-	r.HandleFunc("/sites/{id}", controller.GetSiteById).Methods("GET")
-	r.HandleFunc("/history-checks/all", controller.GetAllChecksHistory).Methods("GET")
+func SetupRouter() *gin.Engine {
+	r := gin.Default()
+
+	r.POST("/sites", controller.PostSite)
+	r.GET("/sites", controller.GetAllSites)
+	r.GET("/sites/:id", controller.GetSiteById)
+	r.GET("/history-checks/all", controller.GetAllChecksHistory)
 	return r
 }
